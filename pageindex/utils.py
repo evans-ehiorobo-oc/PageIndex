@@ -20,6 +20,10 @@ from types import SimpleNamespace as config
 if not os.getenv("OPENAI_API_KEY") and os.getenv("CHATGPT_API_KEY"):
     os.environ["OPENAI_API_KEY"] = os.getenv("CHATGPT_API_KEY")
 
+# LiteLLM proxy configuration
+LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL", "https://litellm.internal.oncorps.io")
+LITELLM_API_KEY = os.getenv("LITE_LLM_KEY")
+
 litellm.drop_params = True
 
 def count_tokens(text, model=None):
@@ -37,6 +41,9 @@ def llm_completion(model, prompt, chat_history=None, return_finish_reason=False)
                 model=model,
                 messages=messages,
                 temperature=0,
+                api_base=LITELLM_BASE_URL,
+                api_key=LITELLM_API_KEY,
+                custom_llm_provider="anthropic",
             )
             content = response.choices[0].message.content
             if return_finish_reason:
@@ -65,6 +72,9 @@ async def llm_acompletion(model, prompt):
                 model=model,
                 messages=messages,
                 temperature=0,
+                api_base=LITELLM_BASE_URL,
+                api_key=LITELLM_API_KEY,
+                custom_llm_provider="anthropic",
             )
             return response.choices[0].message.content
         except Exception as e:
