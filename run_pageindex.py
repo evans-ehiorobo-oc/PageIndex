@@ -1,9 +1,40 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "litellm>=1.82.0",
+#     "pymupdf>=1.26.4",
+#     "PyPDF2>=3.0.1",
+#     "python-dotenv>=1.1.0",
+#     "pyyaml>=6.0.2",
+# ]
+# ///
+
 import argparse
 import os
 import json
+import shutil
+from pathlib import Path
 from pageindex import *
 from pageindex.page_index_md import md_to_tree
 from pageindex.utils import ConfigLoader
+
+
+def move_to_output_dir(output_file: str, output_arg: str) -> None:
+    """Move the output file to the specified output directory if provided."""
+    if output_arg:
+        output_path = Path(output_arg)
+
+        # Create directory if it doesn't exist
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Move the file
+        filename = os.path.basename(output_file)
+        destination = output_path / filename
+        shutil.move(output_file, destination)
+
+        print(f'Output moved to: {destination}')
+
 
 if __name__ == "__main__":
     # Set up argument parser
@@ -28,7 +59,10 @@ if __name__ == "__main__":
                       help='Whether to add doc description to the doc')
     parser.add_argument('--if-add-node-text', type=str, default=None,
                       help='Whether to add text to the node')
-                      
+
+    parser.add_argument('--output', type=str, default=None,
+                      help='Output directory to move the resulting JSON file to')
+
     # Markdown specific arguments
     parser.add_argument('--if-thinning', type=str, default='no',
                       help='Whether to apply tree thinning for markdown (markdown only)')
@@ -76,9 +110,12 @@ if __name__ == "__main__":
         
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(toc_with_page_number, f, indent=2)
-        
+
         print(f'Tree structure saved to: {output_file}')
-            
+
+        # Move to output directory if specified
+        move_to_output_dir(output_file, args.output)
+
     elif args.md_path:
         # Validate Markdown file
         if not args.md_path.lower().endswith(('.md', '.markdown')):
@@ -130,5 +167,8 @@ if __name__ == "__main__":
         
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(toc_with_page_number, f, indent=2, ensure_ascii=False)
-        
+
         print(f'Tree structure saved to: {output_file}')
+
+        # Move to output directory if specified
+        move_to_output_dir(output_file, args.output)
